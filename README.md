@@ -1,52 +1,80 @@
-# LeetCode Training
+# C++ & Algorithm Training
 
-一个以 GitHub 作为唯一进度源的日常算法训练仓库。
+这个仓库用于渐进强化现代 C++ 编码能力，并以算法题作为配套训练。当前主线是 **C++ 特有语言能力**，算法训练是辅助，而不是单纯追求 LeetCode 数量。
 
 ## 工作流
 
-1. 每个工作日 14:00，ChatGPT 检查仓库中的完成情况并选择下一道题。
-2. 本地执行 `git pull` 获取当天题目。
-3. 独立完成 `problems/<题号>-<slug>/solution.cpp`。
-4. 完成后提交并推送到 `main`。
-5. ChatGPT 下一次扫描时根据代码和提交记录判断完成情况，并据此调整后续题目。
+1. 每个工作日 14:00，ChatGPT 扫描仓库中的 C++ 与算法训练进度。
+2. 优先检查上一项 C++ 编码任务是否完成，再检查配套算法题。
+3. 已完成时进行简短 code review，并布置下一阶段任务；未完成时不堆积新的主任务。
+4. 本地 `git pull`，使用 Codex 辅助理解语法、编译错误和代码设计。
+5. 自己完成代码后 commit + push；GitHub 是唯一进度源，不需要手工登记打卡。
 
-## 完成标准
+## 学习路线
 
-一道题满足以下条件时视为已完成：
+C++ 主线按以下顺序渐进：
 
-- 对应目录中存在 `solution.cpp`；
-- `solution.cpp` 已包含实际实现，而不是初始 TODO 模板；
-- 实现已经 commit 并 push 到 GitHub。
+1. 引用、const 与参数传递
+2. 构造函数、析构函数、初始化列表与 const 成员函数
+3. 拷贝构造、拷贝赋值与 Rule of Three
+4. RAII 与资源所有权
+5. `std::unique_ptr` / `std::shared_ptr` / `std::weak_ptr`
+6. 左值、右值、移动构造、移动赋值与 `std::move`
+7. Rule of Zero / Five
+8. 函数模板与类模板
+9. STL 容器、迭代器与 algorithms
+10. Lambda、捕获与回调
+11. Modern C++ 常用能力：`auto`、range-for、structured binding、`enum class`、`constexpr`、`optional` 等
+12. 工程化：头文件/实现文件、namespace、异常安全、CMake、C/C++ 混合调用
 
-不要求手动修改本 README 来登记进度，GitHub 中的题目目录和提交记录就是进度源。
+练习对象尽量采用系统编程场景，例如 `Buffer`、`File`、`Socket`、`Timer`、`Connection`，避免只写教学型 `Student` / `Animal` 示例。
 
 ## 目录结构
 
 ```text
+cpp/
+└── 01-references-const/
+    ├── README.md
+    └── exercise.cpp
+
 problems/
 └── 0001-two-sum/
     ├── README.md
     └── solution.cpp
 ```
 
-每道题的 README 只包含题目编号、名称、难度、核心考点和 LeetCode 链接，不提前保存解法。
+`cpp/` 是当前训练主线；`problems/` 用于配套算法练习。
 
-## 训练原则
+## 完成标准
 
-训练主题会逐步覆盖：数组与哈希、双指针、滑动窗口、栈与队列、链表、二分查找、树、DFS/BFS、堆、回溯、动态规划和图。
+### C++ 训练
 
-优先建立常见算法模式，而不是随机刷题；后续选题会参考已完成题目、近期错误和薄弱主题。
+- `exercise.cpp` 中不存在尚未处理的核心 TODO；
+- 程序体现当天要求练习的 C++ 特性；
+- 代码已经 commit 并 push 到 GitHub。
+
+### 算法题
+
+- `solution.cpp` 已有实际实现；
+- 不是初始 TODO 模板；
+- 已 commit 并 push。
+
+## Codex 的角色
+
+Codex 可以直接帮助：C++ 语法、STL API、编译错误、语言机制解释、代码 review。
+
+默认不要直接告诉用户算法题该使用什么算法，也不要主动补全核心算法；用户明确要求提示或答案时再放宽限制。
 
 ## Commit 约定
 
-推荐格式：
+C++ 训练：
+
+```text
+cpp: finish references and const exercise
+```
+
+算法题：
 
 ```text
 solve: 1 two sum
-```
-
-如果是重新优化已有解法：
-
-```text
-refactor: 1 two sum
 ```
