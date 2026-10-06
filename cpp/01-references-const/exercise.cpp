@@ -4,43 +4,42 @@
 
 // Task 1: use references. Do not change the signature to pointers.
 void swap_values(int& lhs, int& rhs) {
-    // TODO: implement
+    int temp = lhs;
+    lhs = rhs;
+    rhs = temp;
 }
 
 // Task 2: choose an appropriate parameter type so the vector is not copied
 // and cannot be modified inside this function.
-int sum_buffer(/* TODO: parameter */) {
+int sum_buffer(const std::vector<int>& data) {
     int sum = 0;
-
-    // TODO: use a range-based for loop
-
+    for (int value : data) {
+        sum += value;
+    }
     return sum;
 }
 
 class BufferView {
 public:
     // Task 3: keep a reference to the external vector instead of copying it.
-    explicit BufferView(/* TODO: parameter */)
-        /* TODO: initializer list */ {
+    explicit BufferView(std::vector<int>& buffer)
+        : buffer_(buffer) {
     }
 
     std::size_t size() const {
-        // TODO: implement
-        return 0;
+        return buffer_.size();
     }
 
     const int& at(std::size_t index) const {
-        // TODO: return a read-only reference to the requested element
-        // You may use std::vector::at so invalid indexes are detected.
-        throw "TODO";
+        return buffer_.at(index);
     }
 
     void set(std::size_t index, int value) {
-        // TODO: modify the underlying vector
+        buffer_.at(index) = value;
     }
 
 private:
-    // TODO: declare a reference member bound to the external vector
+    std::vector<int>& buffer_;
 };
 
 int main() {
