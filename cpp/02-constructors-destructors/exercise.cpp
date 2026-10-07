@@ -6,37 +6,35 @@ public:
     // Task 1:
     // Initialize every member with a member initializer list.
     explicit Connection(int id, std::string name)
-        // TODO: initializer list
+        : id_(id),name_(name),connected_(false)
     {
-        // Do not initialize members by assignment here.
+
     }
 
     // Task 4: observe object lifetime.
     ~Connection() {
         // TODO: print "destroy connection: <id>"
+        std::cout<<"destroy connection: "<< id_<<"\n";
     }
 
     int id() const {
-        // TODO
-        return 0;
+        return id_;
     }
 
     const std::string& name() const {
-        // TODO
-        throw "TODO";
+        return name_;
     }
 
     bool is_connected() const {
-        // TODO
-        return false;
+        return connected_;
     }
 
     void connect() {
-        // TODO
+        connected_=true;
     }
 
     void disconnect() {
-        // TODO
+        connected_=false;
     }
 
 private:
