@@ -5,24 +5,34 @@ class Buffer {
 public:
     explicit Buffer(std::size_t size)
         : size_(size), data_(nullptr) {
-        // TODO: allocate size_ integers and initialize them to 0
+        data_ = new int[size_]{};
     }
 
     ~Buffer() {
-        // TODO: release the owned array
+        delete[] data_;
     }
 
     Buffer(const Buffer& other)
         : size_(other.size_), data_(nullptr) {
-        // TODO: allocate independent storage and copy every element
+        data_ = new int[size_];
+        for (std::size_t i = 0; i < size_; ++i) {
+            data_[i] = other.data_[i];
+        }
     }
 
     Buffer& operator=(const Buffer& other) {
-        // TODO: handle self-assignment
+        if (this == &other) {
+            return *this;
+        }
 
-        // TODO: replace this object's old storage with an independent
-        // copy of other's storage.
+        int* new_data = new int[other.size_];
+        for (std::size_t i = 0; i < other.size_; ++i) {
+            new_data[i] = other.data_[i];
+        }
 
+        delete[] data_;
+        data_ = new_data;
+        size_ = other.size_;
         return *this;
     }
 
