@@ -9,6 +9,7 @@
 3. 已完成时进行简短 code review，并布置下一阶段任务；未完成时不堆积新的主任务。
 4. 本地 `git pull`，使用 Codex 辅助理解语法、编译错误和代码设计。
 5. 自己完成代码后 commit + push；GitHub 是唯一进度源，不需要手工登记打卡。
+6. 每日练习完成并 review 后，更新 [`docs/learning-notes.md`](docs/learning-notes.md)，把实际掌握的知识点与踩过的坑随进度一同提交。
 
 ## 学习路线
 
