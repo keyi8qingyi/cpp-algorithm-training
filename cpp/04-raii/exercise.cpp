@@ -9,6 +9,7 @@ public:
 
     ~UniqueFd() {
         // TODO: close owned fd if valid
+        if(fd_ != -1) ::close(fd_);
     }
 
     UniqueFd(const UniqueFd&) = delete;
@@ -16,21 +17,26 @@ public:
 
     int get() const {
         // TODO
-        return -1;
+        return fd_;
     }
 
     bool valid() const {
         // TODO
-        return false;
+        return fd_ != -1;
     }
 
     int release() {
         // TODO: return owned fd and relinquish ownership without closing
-        return -1;
+        int new_fd = fd_;
+        fd_ = -1;
+        return new_fd;
     }
 
     void reset(int new_fd = -1) {
         // TODO: close old fd when appropriate, then take ownership
+        if(new_fd == fd_) return;
+        if(valid()) ::close(fd_);
+        fd_ = new_fd;
     }
 
 private:
