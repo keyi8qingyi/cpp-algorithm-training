@@ -26,22 +26,27 @@ private:
 // Task 1: create a Session with exclusive ownership.
 std::unique_ptr<Session> make_session(std::string name) {
     // TODO: create and return a unique_ptr
-    return nullptr;
+    return std::make_unique<Session>(std::move(name));
 }
 
 class SessionManager {
 public:
     void add(std::unique_ptr<Session> session) {
         // TODO: transfer ownership into sessions_
+        sessions_.push_back(std::move(session));
     }
 
     std::size_t count() const {
         // TODO
-        return 0;
+        return sessions_.size();
     }
 
     void print_all() const {
         // TODO: print each session name, one per line
+        for(const auto& session : sessions_)
+        {
+            std::cout<<session->name()<<"\n";
+        }
     }
 
 private:
@@ -52,15 +57,18 @@ class SharedSessionRegistry {
 public:
     void publish(std::shared_ptr<Session> session) {
         // TODO: keep shared ownership
+        current_ = session;
     }
 
     std::weak_ptr<Session> observe() const {
         // TODO: return a non-owning observer
-        return {};
+        auto ptr = std::weak_ptr<Session>(current_);
+        return ptr;
     }
 
     void clear() {
         // TODO: relinquish registry ownership
+        current_.reset();
     }
 
 private:

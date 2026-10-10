@@ -9,7 +9,7 @@
 3. 已完成时进行简短 code review，并布置下一阶段任务；未完成时不堆积新的主任务。
 4. 本地 `git pull`，使用 Codex 辅助理解语法、编译错误和代码设计。
 5. 自己完成代码后 commit + push；GitHub 是唯一进度源，不需要手工登记打卡。
-6. 每日练习完成并 review 后，更新 [`docs/learning-notes.md`](docs/learning-notes.md)，把实际掌握的知识点与踩过的坑随进度一同提交。
+6. 每日练习完成并 review 后，更新 [`docs/learning-notes.md`](docs/learning-notes.md)：逐题回答当天 README 的思考题，补充相关知识点，重点解释用到的 C++/STL 接口与方法（参数、返回值、所有权、生命周期及常见误用），并记录实际掌握的内容和踩过的坑；随进度一同提交。
 
 ## 学习路线
 
