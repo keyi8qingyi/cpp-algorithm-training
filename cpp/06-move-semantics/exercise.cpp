@@ -6,11 +6,11 @@ class MovableBuffer {
 public:
     explicit MovableBuffer(std::size_t size)
         : size_(size), data_(nullptr) {
-        // TODO: allocate size integers initialized to zero
+        data_ = new int[size_]{};
     }
 
     ~MovableBuffer() {
-        // TODO: release owned memory
+        delete[] data_;
     }
 
     MovableBuffer(const MovableBuffer&) = delete;
@@ -18,37 +18,43 @@ public:
 
     MovableBuffer(MovableBuffer&& other) noexcept
         : size_(0), data_(nullptr) {
-        // TODO: take ownership from other and leave other empty
+        data_ = other.data_;
+        size_ = other.size_;
+        other.data_ = nullptr;
+        other.size_ = 0;
     }
 
     MovableBuffer& operator=(MovableBuffer&& other) noexcept {
-        // TODO: handle self-move and existing resource
-        // TODO: transfer ownership and leave other empty
+        if (this == &other) {
+            return *this;
+        }
+
+        delete[] data_;
+        data_ = other.data_;
+        other.data_ = nullptr;
+        size_ = other.size_;
+        other.size_ = 0;
         return *this;
     }
 
     std::size_t size() const {
-        // TODO
-        return 0;
+        return size_;
     }
 
     int* data() {
-        // TODO
-        return nullptr;
+        return data_;
     }
 
     const int* data() const {
-        // TODO
-        return nullptr;
+        return data_;
     }
 
     void set(std::size_t index, int value) {
-        // TODO: assume index is valid
+        data_[index] = value;
     }
 
     int get(std::size_t index) const {
-        // TODO: assume index is valid
-        return 0;
+        return data_[index];
     }
 
 private:
