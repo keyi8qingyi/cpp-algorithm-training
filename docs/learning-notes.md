@@ -1,6 +1,6 @@
 # C++ 学习笔记
 
-这份笔记记录已经完成并 review 过的练习。每完成一天的练习，就根据实际代码和遇到的问题补充对应章节；未完成的题目不提前写题解。
+这份笔记记录已经完成并 review 过的练习：实际理解、错误、思考题和验证结果。通用接口及扩展用法按主题整理在 [知识专题](knowledge/README.md)，每日笔记链接到相应专题。扩展参考不代表已经掌握；未完成的算法题不提前写题解。
 
 ## 01 · 引用与 `const`
 
@@ -13,17 +13,9 @@
 - 返回引用不会产生独立的返回对象，因此必须保证被引用的对象仍然有效。不能返回局部变量的引用。
 - `BufferView` 保存外部 `vector` 的引用，可以修改原数据，但不拥有它。外部 `vector` 必须比 `BufferView` 活得久；返回的元素引用也只在对应元素仍有效时可用。
 
-### 接口与用法
+### 相关专题
 
-| 接口或语法 | 本练习中的作用 | 使用时要注意 |
-| --- | --- | --- |
-| `std::vector<int> data{1, 2, 3};` | 创建含有三个元素的容器 | 容器拥有元素。 |
-| `data.size()` | 返回元素个数，类型是 `std::size_t` | 空容器返回 `0`；它不是最后一个元素的下标。 |
-| `data.at(i)` | 返回第 `i` 个元素的引用，可读取或赋值 | 越界时抛出 `std::out_of_range`；`i` 从 `0` 开始。 |
-| `for (int value : data)` | 逐个读取整数值 | `value` 是副本，改它不会改容器；大型元素可考虑 `const auto&`。 |
-| `int&` / `const int&` | 前者允许修改原对象，后者只读 | 引用必须绑定到有效对象，不能当成独立所有者。 |
-| `BufferView::at(i) const` | 返回原元素的 `const int&` | 调用者不能经该引用修改元素；容器销毁或相关引用失效后不能再使用。 |
-| `BufferView::set(i, value)` | 通过 `buffer_.at(i) = value` 修改原容器 | 使用了 `at` 的越界检查；`BufferView` 不负责延长容器寿命。 |
+参见 [vector 的创建、访问、容量、增删与失效规则](knowledge/vector.md) 和 [引用绑定与生命周期](knowledge/move-semantics.md)。本练习的 `BufferView` 是借用容器的自定义视图，不是标准容器；它的 `at()` 通过 `vector::at()` 检查下标。
 
 ### 思考题
 
@@ -43,7 +35,9 @@
 - `name()` 返回 `const std::string&` 时避免复制字符串，但调用者不能通过它修改名称，且该引用的有效期受 `Connection` 对象及其成员状态约束。
 - 局部对象离开作用域时自动调用析构函数。内层作用域的对象先析构，外层对象后析构。
 
-### 接口与用法
+### 本练习的接口约定
+
+通用引用、返回值和资源语义见 [引用与移动语义](knowledge/move-semantics.md)。
 
 | 接口或语法 | 本练习中的作用 | 使用时要注意 |
 | --- | --- | --- |
@@ -78,7 +72,9 @@
 - 复制循环要使用来源对象的大小。目标对象原来的 `size_` 可能不同；曾因按旧大小循环，导致新数组的一部分没有初始化。
 - 当类直接拥有需要手动释放的资源时，要一起考虑析构、拷贝构造和拷贝赋值，这就是 Rule of Three。后续学习 RAII、智能指针和 Rule of Zero 时再比较如何简化所有权管理。
 
-### 接口与用法
+### 本练习的接口约定
+
+通用引用、返回值和资源语义见 [引用与移动语义](knowledge/move-semantics.md)。
 
 | 接口或语法 | 本练习中的作用 | 使用时要注意 |
 | --- | --- | --- |
@@ -108,7 +104,9 @@
 - 禁止复制，避免两个对象认为自己拥有同一个 fd，导致重复关闭。移动语义留待后续阶段。
 - Review 中发现过三处所有权错误：析构前先设为 `-1` 会漏关原 fd；`release()` 直接返回 `-1` 会丢失交出的 fd；`reset()` 若在比较相同 fd 前关闭旧 fd，会留下一个已关闭却仍被视为有效的 fd。逐一修正后，C++17 编译和练习自带程序运行通过。
 
-### 接口与用法
+### 本练习的接口约定
+
+更多路径、目录遍历、文件流和 POSIX fd 用法见 [文件系统与文件 I/O](knowledge/filesystem-and-io.md)。`UniqueFd` 是本练习自定义类型，以下是它的具体约定。
 
 | 接口或语法 | 本练习中的作用 | 使用时要注意 |
 | --- | --- | --- |
@@ -139,34 +137,11 @@
 - `clear()` 调用 `current_.reset()` 放弃 Registry 的所有权，不能手动 `delete` 所管理的对象。运行中，`monitor` 在调用者 `shared.reset()` 与 Registry `clear()` 都完成后析构；`radius-client` 在 `manager` 生命周期结束时析构。
 - 使用 C++17、`-Wall -Wextra -Wpedantic -Werror` 编译通过，练习程序输出与上述生命周期一致。
 
-### 接口与用法
+### 相关专题与本练习接口
 
-| 接口或语法 | 本练习中的作用 | 使用时要注意 |
-| --- | --- | --- |
-| `std::make_unique<Session>(args...)` | 构造动态 `Session` 并返回 `unique_ptr<Session>` | `unique_ptr` 独占对象，不可复制；适合明确的单一所有者。 |
-| `std::move(ptr)` | 让后续操作可以从 `ptr` 移动 | `std::move` 本身不移动对象；`manager.add(std::move(owned))` 才实际转移指针所有权。 |
-| `ptr.get()` | 获取裸指针用于临时访问 | **不交出所有权**；不能 `delete` 返回的指针。 |
-| `ptr.release()` | 交出 `unique_ptr` 管理的裸指针，并使它变空 | 不销毁对象；接手者必须重新管理或最终释放它。本练习没有调用此接口。 |
-| `ptr.reset()` | 让 `unique_ptr` 释放当前对象并变空 | 与 `release()` 不同：若持有对象，`reset()` 会销毁它。 |
-| `ptr->name()` / `*ptr` | 访问所指对象或取得对象引用 | 使用前须确认指针非空。`if (ptr)` 可判断智能指针是否持有对象。 |
-| `sessions_.push_back(std::move(session))` | 在 `vector` 末尾加入一个 `unique_ptr` | 容器成为该指针的新所有者；`push_back(session)` 会尝试复制，无法编译。 |
-| `sessions_.size()` | 返回容器元素数 | 即使某元素是空指针，也照样计入；本练习正常路径加入的是非空指针。 |
-| `std::make_shared<Session>(args...)` | 构造动态 `Session` 并返回 `shared_ptr<Session>` | 复制 `shared_ptr` 会增加共享所有者数；最后一个所有者释放时销毁对象。 |
-| `shared.reset()` | 让当前 `shared_ptr` 放弃所有权并变空 | 仅当它是最后一个共享所有者时才销毁对象；不可手动 `delete shared.get()`。 |
-| `shared.use_count()` | 查询当前共享所有者数量 | 便于学习时观察计数；不能用它代替设计清晰的所有权，也不要用它判断 `weak_ptr` 访问是否安全。 |
-| `std::weak_ptr<Session>(shared)` | 创建不拥有对象的观察者 | 不增加共享所有者数，不能直接用 `->` 访问对象。 |
-| `observer.lock()` | 尝试取得一个临时的 `shared_ptr` | 对象仍存活则返回非空指针，并在持有期间延长其寿命；否则返回空指针。 |
-| `observer.expired()` | 查询被观察对象是否已销毁 | 可用于观察状态；若接下来要访问对象，仍应使用 `lock()` 获得持有期内的所有权。 |
+[智能指针专题](knowledge/smart-pointers.md) 整理了创建、get/release/reset、数组、自定义删除器、共享控制块、weak_ptr 和参数设计；[vector 专题](knowledge/vector.md) 补充了不可复制元素的存储与失效规则。
 
-例如，需要访问观察对象时把 `lock()` 的结果保存在局部变量中：
-
-```cpp
-if (auto session = observer.lock()) {
-    std::cout << session->name() << '\n';
-}
-```
-
-`publish(std::shared_ptr<Session> session)` 的按值参数表示函数可以保留一份共享所有权；`current_ = session` 使 Registry 成为所有者。`observe()` 返回 `weak_ptr` 只提供观察能力。只读取 `Session` 的函数通常写成 `void inspect(const Session& session)`，无须让接口承担共享所有权的语义。
+本练习 `publish(std::shared_ptr<Session> session)` 的按值参数允许函数保留共享所有权，`current_ = session` 让 Registry 成为所有者；`observe()` 返回 weak_ptr 提供观察能力。只在调用期间读取 Session 时，通常用 `const Session&`，无需引入共享所有权。
 
 ### 思考题
 
@@ -203,21 +178,11 @@ int&& movable = std::move(value); // 仍然引用 value，没有新建或搬走�
 
 `other` 的声明类型虽然是右值引用，但函数体中表达式 `other` 是左值。引用类型与使用名字时的表达式值类别要分开理解。如果要把 `other` 继续交给另一个要求右值的接口，需要再次使用 `std::move(other)`；本题直接访问其成员即可。
 
-### 接口与用法
+### 相关专题与本练习接口
 
-| 接口或语法 | 参数、返回值与本题用途 | 所有权、生命周期及常见误用 |
-| --- | --- | --- |
-| `std::move(object)`，来自 `<utility>` | 接收对象表达式，返回经类型转换得到的右值引用；对本题的非 const 对象，结果类型是 `MovableBuffer&&` | 不分配、不释放、不复制数组，也不自动清空来源。实际移动由随后选中的构造或赋值完成。对 const 对象使用它不会去掉 const，因而不能绑定到本题的非 const 移动参数。 |
-| `MovableBuffer(std::size_t size)` | 接收元素个数，创建对象并用 `new int[size_]{}` 把元素初始化为 0；构造函数没有返回值 | `explicit` 限制隐式转换。`new[]` 失败可抛异常；成功后对象负责释放数组。`new int[0]{}` 合法，所得指针不保证为空，不能解引用，但可以交给 `delete[]`。 |
-| `MovableBuffer(MovableBuffer&& other) noexcept` | 接收可移动来源的引用，构造新对象；没有返回值 | 指针和大小转给新对象，并清空来源。只复制指针却不清空来源，会导致两个对象重复释放同一数组。 |
-| `MovableBuffer& operator=(MovableBuffer&& other) noexcept` | 接收可移动来源的引用，返回当前对象的引用 | 目标已有资源须先释放；返回 `*this` 不会复制对象。不同对象间赋值后来源为空。 |
-| `this`、`&other`、`return *this` | `this` 是当前对象指针；`&other` 是来源对象地址；`*this` 是当前对象的左值 | `this == &other` 判断是否为同一对象，应在释放资源之前检查；返回引用不能超过当前对象的生命周期使用。 |
-| `noexcept` | 声明异常不能从该函数逸出，不是自动捕获异常 | 若异常逃出则调用 `std::terminate`。本题移动只处理指针、大小和整数数组释放，不需要可能抛异常的数组分配。 |
-| `= delete` | 删除拷贝构造和拷贝赋值，使尝试复制的调用编译失败 | 不妨碍引用传参；也不会自动替你实现移动函数。 |
-| `~MovableBuffer()` / `delete[] data_` | 对象生命周期结束时释放当前拥有的数组；析构函数没有返回值 | 与 `new[]` 配对，对 `nullptr` 安全。移动后来源置空，因此析构不会释放已交给目标的数组。 |
-| `size() const` | 无参数，返回 `std::size_t` 类型的元素个数 | 可在 const 对象上调用；大小为 0 时没有有效下标。 |
-| `data()` / `data() const` | 无参数，分别返回 `int*` / `const int*` | 只借用地址，不交出所有权，调用者不能手动释放。const 重载禁止经返回指针修改元素。成功移动后，原数组指针仍指向同一数组，但其寿命由新所有者控制；数组被释放后指针悬空。 |
-| `set(std::size_t index, int value)` / `get(std::size_t index) const` | 前者按下标写入整数、返回 `void`；后者返回整数副本 | 都要求 `index < size()`，本题没有越界检查。返回的整数副本独立于数组寿命。 |
+[引用与移动语义专题](knowledge/move-semantics.md) 覆盖引用绑定、std::move、const 对移动的影响、移动构造与赋值、noexcept、返回值和数组资源。与容器和智能指针配合的用法见 [vector](knowledge/vector.md) 与 [智能指针](knowledge/smart-pointers.md)。
+
+本练习 `size()` 返回元素个数；`data()` 的 const / 非 const 重载分别返回 `const int*` / `int*`，只借用地址，不转移所有权；`set(index, value)` 返回 void，`get(index) const` 返回整数副本，两者都要求有效下标，没有越界检查。移动后原数组的借用指针由新所有者的资源寿命约束。
 
 ### 本次错误与修正
 
@@ -241,4 +206,4 @@ int&& movable = std::move(value); // 仍然引用 value，没有新建或搬走�
 
 ## 每日更新方式
 
-练习完成并 review 后，按训练阶段追加或修订笔记：记录实际用到的语言机制、代码中出现过的错误及原因、资源与生命周期边界、验证结论；逐题回答当天 README 的思考题，并整理相关接口的参数、返回值、所有权和常见误用。保持示例简短；算法题只记录已完成题目的知识点，不提前透露未完成题目的核心解法。
+练习完成并 review 后，更新本文件的对应章节：记录实际用到的语言机制、错误及原因、资源与生命周期边界、验证结论，并逐题回答 README 的思考题。通用语法与接口的常见用法、扩展用法统一维护在 [知识专题](knowledge/README.md)，当天笔记添加链接；只有练习特有的接口约定留在当天章节。专题应说明参数、返回值、所有权、失效条件、错误处理和必要的复杂度，配短小示例，并区分已练习内容与扩展参考。提交进度时同步提交相关专题；不提前透露未完成算法题的核心解法。
