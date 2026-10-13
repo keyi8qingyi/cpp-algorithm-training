@@ -204,6 +204,38 @@ int&& movable = std::move(value); // 仍然引用 value，没有新建或搬走�
 - 临时补充检查通过：零初始化、零长度数组、移动前后地址一致、来源指针清空、非空目标赋值、空对象移动、移动后重新赋值、自移动保持数据、赋值返回目标引用，以及 const / 非 const `data()` 的返回类型。编译期也验证了禁止复制和移动操作的 `noexcept` 属性。
 - AddressSanitizer 与 UndefinedBehaviorSanitizer 检查通过（运行时设置 `ASAN_OPTIONS=detect_leaks=0`）。当前环境下 LeakSanitizer 因 ptrace 限制无法运行，因此不把泄漏检测记为通过；旧数组释放与唯一所有权由代码 review 核对。补充检查代码放在 `/tmp`，不作为练习源码提交。
 
+## 07 · Rule of Zero / Five
+
+对应练习：[`cpp/07-rule-of-zero-five`](../cpp/07-rule-of-zero-five/)，2026-10-13 完成并 review。
+
+### 代码与所有权
+
+- `LegacyBuffer` 独占 `new int[size_]{}` 分配的数组，并在析构时 `delete[]`。拷贝构造分配新数组并逐个复制，拷贝赋值先分配、复制，再释放旧数组和更新成员；因此两个副本互不影响，分配失败时目标保持原状。
+- 移动构造和移动赋值只接管指针与大小，并将来源置为 `nullptr`、`0`。移动赋值先处理目标旧数组，且先检查自移动；两种移动操作均无需分配，适合标为 `noexcept`。本类明确约定移动后来源为空。
+- `ModernBuffer` 只保存 `std::vector<int>`，通过成员初始化列表 `data_(size)` 创建 `size` 个零值元素。它不声明析构、拷贝或移动特殊成员函数；vector 负责资源释放、独立复制和移动。`size()` 返回 `data_.size()`。
+- 两种 `at()` 都返回内部元素的引用，并假定 `index < size()`，不会检查下标。引用在所属对象销毁后失效；ModernBuffer 的 vector 若重新分配，旧元素引用也会失效。这些自定义 `at()` 与会抛出 `std::out_of_range` 的 `std::vector::at()` 不同。
+- 对比：LegacyBuffer 需要维护五个特殊成员函数及指针和大小的不变式；ModernBuffer 把资源管理交给 vector，代码更少，复制失败时的清理也由容器完成。两者复制 `n` 个 `int` 均为 O(n)；LegacyBuffer 的移动为 O(1)，此处使用默认分配器的 vector 移动构造通常也是 O(1)，不能把该复杂度推广到所有移动情形。
+
+### 本次错误与修正
+
+初版 `LegacyBuffer::at()` 在越界时尝试 `return -1`：非 const 的 `int&` 不能绑定这个临时值，const 的 `const int&` 即使绑定成功也会在返回后悬空；`std::size_t index < 0` 恒为假。按练习的有效下标前提，最后直接返回数组元素。`ModernBuffer::size()` 曾保留模板中的 `return 0`，后改为 `data_.size()`。构造 vector 时选用 `data_(size)`；`data_{size}` 对 `vector<int>` 会创建一个值为 `size` 的元素，语义不同。
+
+相关接口、特殊成员函数生成规则与异常安全见 [Rule of Zero / Five 专题](knowledge/rule-of-zero-five.md)；vector 的构造、访问、容量和失效规则见 [vector 专题](knowledge/vector.md)，移动表达式与资源转移见 [引用与移动语义](knowledge/move-semantics.md)。专题中的扩展用法不表示已在本练习中验证。
+
+### 思考题
+
+1. **为什么写了析构函数以后，隐式移动行为会受到影响？** 用户声明析构函数后，编译器不会再隐式声明移动构造和移动赋值。即便把对象写成 `std::move(x)`，它仍可能匹配拷贝函数；需要的移动操作要显式设计。本练习的 LegacyBuffer 因管理裸指针而手写移动，ModernBuffer 没有声明析构函数，所以能使用成员支持的隐式移动。
+2. **Rule of Five 是要求所有类都手写五个函数吗？** 不是。它提醒手动管理资源并自定义一个特殊成员函数时，应一起审视其余几个操作；不合理的复制可以 `= delete`。如果成员已负责资源管理，优先考虑 Rule of Zero，无需为形式凑齐五个函数。
+3. **为什么 ModernBuffer 不需要手写析构函数？** vector 成员在 ModernBuffer 析构时自动析构，并释放它拥有的存储及元素；没有裸资源需要类本身清理。
+4. **std::vector 的复制和移动分别是什么语义？** 复制产生独立的元素序列，修改其中一份的 `int` 不影响另一份；移动把来源资源或元素状态转给目标，来源仍有效但状态通常未指定，不能一律假定其大小为 0。本练习验证了移动目标的数据，没有依赖移动来源的大小。
+5. **如果类拥有一个独占的 Linux fd，它一定应该支持复制吗？** 不一定。直接复制 fd 整数会让两个对象都认为自己负责关闭同一资源；独占 fd 包装类通常删除复制操作并支持移动。如果确实需要独立句柄，应明确通过 `dup` 等系统调用定义复制语义并处理失败，而不是默认复制整数。
+
+### 验证记录
+
+- 使用 C++17、`-Wall -Wextra -Wpedantic -Werror` 编译通过。练习程序输出 `legacy: 10 20` 和 `modern: 30 40`，验证了两类对象复制后的元素互不影响，以及移动目标保有正确数据。
+- 临时边界检查通过：零长度对象、整数零初始化、不同大小的拷贝赋值、复制后互不影响、自赋值、自移动、移动后来源空状态、const 访问，以及移动操作的 `noexcept` 属性。检查代码位于 `/tmp`，不作为练习源码提交。
+- AddressSanitizer 与 UndefinedBehaviorSanitizer 运行通过，设置了 `ASAN_OPTIONS=detect_leaks=0`；当前环境的 LeakSanitizer 因 ptrace 限制不可用，故不记录为泄漏检测通过。
+
 ## 每日更新方式
 
 练习完成并 review 后，更新本文件的对应章节：记录实际用到的语言机制、错误及原因、资源与生命周期边界、验证结论，并逐题回答 README 的思考题。通用语法与接口的常见用法、扩展用法统一维护在 [知识专题](knowledge/README.md)，当天笔记添加链接；只有练习特有的接口约定留在当天章节。专题应说明参数、返回值、所有权、失效条件、错误处理和必要的复杂度，配短小示例，并区分已练习内容与扩展参考。提交进度时同步提交相关专题；不提前透露未完成算法题的核心解法。

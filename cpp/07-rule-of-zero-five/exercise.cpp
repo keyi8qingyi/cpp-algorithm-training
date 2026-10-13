@@ -7,45 +7,67 @@ class LegacyBuffer {
 public:
     explicit LegacyBuffer(std::size_t size)
         : size_(size), data_(nullptr) {
-        // TODO: allocate and zero-initialize
+        data_ = new int[size_]{};
     }
 
     ~LegacyBuffer() {
-        // TODO: release resource
+        delete[] data_;
     }
 
     LegacyBuffer(const LegacyBuffer& other)
         : size_(other.size_), data_(nullptr) {
-        // TODO: deep copy
+        data_ = new int[size_];
+        for (std::size_t i = 0; i < size_; ++i) {
+            data_[i] = other.data_[i];
+        }
     }
 
     LegacyBuffer& operator=(const LegacyBuffer& other) {
-        // TODO: deep copy assignment, handle self-assignment and old resource
+        if (this == &other) {
+            return *this;
+        }
+
+        int* new_data = new int[other.size_];
+        for (std::size_t i = 0; i < other.size_; ++i) {
+            new_data[i] = other.data_[i];
+        }
+
+        delete[] data_;
+        data_ = new_data;
+        size_ = other.size_;
         return *this;
     }
 
     LegacyBuffer(LegacyBuffer&& other) noexcept
         : size_(0), data_(nullptr) {
-        // TODO: steal resource and empty other
+        data_ = other.data_;
+        size_ = other.size_;
+        other.data_ = nullptr;
+        other.size_ = 0;
     }
 
     LegacyBuffer& operator=(LegacyBuffer&& other) noexcept {
-        // TODO: move assignment, handle self-move and old resource
+        if (this == &other) {
+            return *this;
+        }
+
+        delete[] data_;
+        data_ = other.data_;
+        other.data_ = nullptr;
+        size_ = other.size_;
+        other.size_ = 0;
         return *this;
     }
 
     std::size_t size() const {
-        // TODO
-        return 0;
+        return size_;
     }
 
     int& at(std::size_t index) {
-        // TODO: assume valid index
         return data_[index];
     }
 
     const int& at(std::size_t index) const {
-        // TODO: assume valid index
         return data_[index];
     }
 
@@ -57,23 +79,20 @@ private:
 class ModernBuffer {
 public:
     explicit ModernBuffer(std::size_t size)
-        // TODO: initialize vector member
+        : data_(size)
     {}
 
     // Rule of Zero: do not declare destructor/copy/move functions.
 
     std::size_t size() const {
-        // TODO
-        return 0;
+        return data_.size();
     }
 
     int& at(std::size_t index) {
-        // TODO
         return data_[index];
     }
 
     const int& at(std::size_t index) const {
-        // TODO
         return data_[index];
     }
 
